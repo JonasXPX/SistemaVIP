@@ -14,7 +14,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import br.com.uol.pagseguro.domain.Item;
 import br.com.uol.pagseguro.domain.Transaction;
 
-public class Manager {
+public abstract class Manager {
 
 	private static SistemaVIP sistemaVip;
 	
