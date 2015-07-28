@@ -1,0 +1,8 @@
+name: SistemaVIP
+main: me.jonasxpx.vip.SistemaVIP
+version: 1.0
+commands:
+    ativarvip:
+    vendervip:
+    delvenda:
+    comprarvip:
