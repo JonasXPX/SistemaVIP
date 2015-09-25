@@ -2,6 +2,7 @@ package me.jonasxpx.vip;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.NumberFormat;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,7 +25,7 @@ public abstract class Manager {
 	}
 	
 	public static boolean isRegistred(String CODE){
-		if(new File(sistemaVip.getDataFolder() + "/" + CODE.toUpperCase() + ".yml").exists())
+		if(new File(sistemaVip.getDataFolder() + "/codigos/" + CODE.toUpperCase() + ".yml").exists())
 			return true;
 		else
 			return false;
@@ -41,8 +42,8 @@ public abstract class Manager {
 	
 	public static void register(final String nick, final Transaction tns) {
 		try {
-			System.out.println(sistemaVip.getDataFolder() + "/" + tns.getCode().toUpperCase() + ".yml");
-			File file = new File(sistemaVip.getDataFolder() + "/" + tns.getCode().toUpperCase() + ".yml");
+			System.out.println(sistemaVip.getDataFolder() + "/codigos/" + tns.getCode().toUpperCase() + ".yml");
+			File file = new File(sistemaVip.getDataFolder() + "/codigos/" + tns.getCode().toUpperCase() + ".yml");
 			file.getParentFile().mkdirs();
 			file.createNewFile();
 			FileConfiguration config = YamlConfiguration.loadConfiguration(file);
@@ -55,6 +56,7 @@ public abstract class Manager {
 				config.set("Itens." + item.getId() + ".Quantia", item.getQuantity());
 			}
 			config.save(file);
+			new Log(nick, tns, Bukkit.getPlayer(nick)).register();;
 			new BukkitRunnable() {
 				@Override
 				public void run() {
@@ -63,14 +65,14 @@ public abstract class Manager {
 				}
 			}.runTask(sistemaVip);
 		} catch (IOException e) {
-			Bukkit.getPlayer(nick).sendMessage("§6Sistema com problemas, informe um STAFF");
+			Bukkit.getPlayer(nick).sendMessage("§6Sistema com problemas, informe a um STAFF");
 			e.printStackTrace();
 		}
 	}
 	
 	public static void ativar(Transaction tns, String player, boolean checkSaler){
 		try {
-			File file = new File(sistemaVip.getDataFolder() + "/" + tns.getCode().toUpperCase() + ".yml");
+			File file = new File(sistemaVip.getDataFolder() + "/codigos/" + tns.getCode().toUpperCase() + ".yml");
 			FileConfiguration config = YamlConfiguration.loadConfiguration(file);
 			Player play = Bukkit.getPlayer(player);
 			if(!isOwner(tns.getCode(), player)){
@@ -80,6 +82,7 @@ public abstract class Manager {
 			for(Item item : tns.getItems()){
 				if(config.getInt("Itens." + item.getId() + ".Quantia") > 0){
 					config.set("Itens." + item.getId() + ".Quantia", config.getInt("Itens." + item.getId() + ".Quantia")-1);
+					System.out.println(item.getId());
 					String cmd = SistemaVIP.cmds.get(item.getId()).replaceAll("@player", player);
 					System.out.println(cmd);
 					Bukkit.dispatchCommand(sistemaVip.getServer().getConsoleSender(), cmd);
@@ -89,7 +92,7 @@ public abstract class Manager {
 			}
 			config.save(file);
 		} catch (IOException e) {
-			Bukkit.getPlayer(player).sendMessage("§6Sistema com problemas, informe um STAFF");
+			Bukkit.getPlayer(player).sendMessage("§6Sistema com problemas, informe a um STAFF");
 			e.printStackTrace();
 		}
 	}
@@ -104,7 +107,7 @@ public abstract class Manager {
 	}
 	
 	public static File getFileByCode(String CODE){
-		return new File(sistemaVip.getDataFolder() + "/" + CODE.toUpperCase() + ".yml");
+		return new File(sistemaVip.getDataFolder() + "/codigos/" + CODE.toUpperCase() + ".yml");
 	}
 	
 	public static boolean isForSale(String CODE){
@@ -145,7 +148,9 @@ public abstract class Manager {
 			config.save(file);
 			Bukkit.getPlayer(nick).sendMessage("§6Codigo validado!.\n"
 					+ "§aSeu código já esta à venda, para remover a venda digite /delvenda <CODIGO>");
-			
+			if(Bukkit.getPlayerExact(para) != null)
+				Bukkit.getPlayerExact(para).sendMessage("§a§l[!]§6Um VIP foi oferecido para você, no valor de §l" + NumberFormat.getCurrencyInstance().format(valor) 
+						+ " §6Digite §l/comprarvip " + nick);
 		}catch(IOException e){
 			e.printStackTrace();
 		}
@@ -173,8 +178,10 @@ public abstract class Manager {
 			player.sendMessage("§6Dinheiro insuficiente");
 			return;
 		}
-		sistemaVip.eco.withdrawPlayer(player, config.getInt("Venda.Valor"));
-		sistemaVip.eco.depositPlayer(config.getString("Venda.Nick"), config.getInt("Venda.Valor"));
+		if(isRegistred(CODE)){
+			sistemaVip.eco.withdrawPlayer(player, config.getInt("Venda.Valor"));
+			sistemaVip.eco.depositPlayer(config.getString("Venda.Nick"), config.getInt("Venda.Valor"));
+		}
 		player.sendMessage("§aAguarde, analisando código do jogador...");
 		new Thread(new CallPagSeguro(nick, CODE, Type.ATIVAÇAO)).start();
 	}
